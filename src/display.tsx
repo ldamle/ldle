@@ -1,21 +1,15 @@
 import {Element} from './display/element';
+import {Connection} from './display/connection';
+import {Elements} from './display/elements';
 import {MainFrame} from './display/mainframe';
 import {useState} from 'react';
 
-type displayPropsType = {
-    scale: number;
-    setScale: React.Dispatch<React.SetStateAction<number>>;
+
+type coords = {x:number,y:number}
+const displayProps = {
+    scale: 0.7
 };
-let displayProps : displayPropsType;
 
-function useHook() {
-    const [scale, setScale] = useState<number>(1);
-
-    displayProps = {
-        scale: scale,
-        setScale: setScale
-    };
-}
-
+type displayPropsType = typeof displayProps;
 export type {displayPropsType};
-export {Element, MainFrame, displayProps, useHook};
+export {Element, Connection, Elements, MainFrame, displayProps};

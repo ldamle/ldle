@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import * as lle from 'ldamle.lle';
 import * as d3 from 'd3';
 import katex from 'katex';
@@ -26,9 +26,13 @@ const measureFormulaWidth = (formula: string, fontSize: number) => {
     return width;
 };
 
-const dragHandler = (svg: d3.Selection<SVGSVGElement, unknown, any, any>) => {
+const dragHandler = (
+    svg: d3.Selection<SVGSVGElement, unknown, any, any>,
+    element: lle.Types.Interface.Element
+) => {
     let initialX: number;
     let initialY: number;
+
     const drag = d3
         .drag<SVGSVGElement, unknown>()
         .on('start', function (event) {
@@ -37,8 +41,8 @@ const dragHandler = (svg: d3.Selection<SVGSVGElement, unknown, any, any>) => {
             if (transform) {
                 const translate = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
                 if (translate) {
-                    initialX = parseFloat(translate[1]);
-                    initialY = parseFloat(translate[2]);
+                    initialX = Display.displayProps.scale * parseFloat(translate[1]);
+                    initialY = Display.displayProps.scale * parseFloat(translate[2]);
                 } else {
                     initialX = 0;
                     initialY = 0;
@@ -47,15 +51,22 @@ const dragHandler = (svg: d3.Selection<SVGSVGElement, unknown, any, any>) => {
                 initialX = 0;
                 initialY = 0;
             }
-            // Вычисляем смещение между точкой начала перетаскивания и текущими координатами
-            initialX = Display.displayProps.scale * (event.x - initialX);
-            initialY = Display.displayProps.scale * (event.y - initialY);
+            initialX = event.x - initialX;
+            initialY = event.y - initialY;
         })
         .on('drag', function (event) {
-            d3.select(this).attr(
-                'transform',
-                `translate(${event.x - initialX}, ${event.y - initialY})`
-            );
+            let trX = (1 / Display.displayProps.scale) * (event.x - initialX);
+            let trY = (1 / Display.displayProps.scale) * (event.y - initialY);
+            if (trX < 0) {
+                trX = 0;
+            }
+            if (trY < 0) {
+                trY = 0;
+            }
+            d3.select(this).attr('transform', `translate(${trX}, ${trY})`);
+            element.props.SetX(String(trX));
+            element.props.SetY(String(trY));
+
         })
         .on('end', function () {
             d3.select(this).classed('active', false);
@@ -161,20 +172,20 @@ const Element: React.FC<{element: lle.Types.Interface.Element}> = ({element}) =>
             );
             let connWidth = maxWidthConn + 2 * element.style.sizes.MarginConn.h;
             let centerWidth = maxWidthName + 2 * element.style.sizes.MarginCenter.h;
-            let coontainerWidth =
+            let containerWidth =
                 centerWidth +
                 (element.style.display_out_connections ? connWidth : 0) +
                 (element.style.display_in_connections ? connWidth : 0);
 
             const svg = d3
                 .select(svgRef.current)
-                .attr('width', coontainerWidth + element.style.sizes.strokeWidth)
+                .attr('width', containerWidth + element.style.sizes.strokeWidth)
                 .attr('height', containerHeight + element.style.sizes.strokeWidth);
 
             svg.append('rect')
                 .attr('x', element.style.sizes.strokeWidth / 2)
                 .attr('y', element.style.sizes.strokeWidth / 2)
-                .attr('width', coontainerWidth)
+                .attr('width', containerWidth)
                 .attr('height', containerHeight)
                 .attr('fill', element.style.sizes.color.background)
                 .attr('stroke', element.style.sizes.color.foreground)
@@ -209,7 +220,8 @@ const Element: React.FC<{element: lle.Types.Interface.Element}> = ({element}) =>
             }
 
             const group = svg.append('g');
-            dragHandler(svg);
+
+            dragHandler(svg, element);
 
             if (element.style.display_in_connections) {
                 for (let i = 0; i < inFconn.length; i++) {
@@ -285,13 +297,21 @@ const Element: React.FC<{element: lle.Types.Interface.Element}> = ({element}) =>
                     .append('xhtml:div')
                     .html(nameFcenter[i]);
             }
+            const rect = svgRef.current.getBoundingClientRect();
+            let x = rect.left + window.scrollX;
+            let y = rect.top + window.scrollY;
+            if (svgRef.current.parentElement) {
+                const parentRect = svgRef.current.parentElement.getBoundingClientRect();
+                x -= parentRect.left + window.scrollX;
+                y -= parentRect.top + window.scrollY;
+            }
+
+            element.props['width'] = String(containerWidth);
+            element.props['x'] = String(x);
+            element.props['y'] = String(y);
         }
     }, []);
 
-    return (
-        <div className="elem.style.className">
-            <svg ref={svgRef}></svg>
-        </div>
-    );
+    return <svg className={element.style.class_name} ref={svgRef}></svg>;
 };
 export {Element};

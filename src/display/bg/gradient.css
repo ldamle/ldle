@@ -1,0 +1,6 @@
+.noizeBg{
+    filter: contrast(100%) brightness(100%);
+    background:
+        linear-gradient(140deg, rgba(0, 255, 165, 0.48), rgba(0, 203, 255, 0.4)),
+        url(./noize.svg);
+}

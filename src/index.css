@@ -11,3 +11,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.ant-menu,
+.ant-menu-light.ant-menu-root.ant-menu-inline,
+.ant-menu-light>.ant-menu.ant-menu-root.ant-menu-inline,
+.ant-menu-light.ant-menu-root.ant-menu-vertical,
+.ant-menu-light>.ant-menu.ant-menu-root.ant-menu-vertical {
+  border-inline-end: none !important;
+}

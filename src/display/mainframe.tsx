@@ -1,8 +1,10 @@
-import React, { useRef, useEffect, ReactNode } from 'react';
-import { Layout, Menu, Slider } from 'antd';
+import React, { useState, useRef, useEffect, ReactNode } from 'react';
+import { Layout, Menu, Button, Slider } from 'antd';
+import { AppstoreOutlined, MailOutlined, SettingOutlined } from '@ant-design/icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowPointer, faHandPointer, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowPointer, faHand, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { displayProps } from '../display';
+import './bg/gradient.css';
 
 const { Sider, Content } = Layout;
 
@@ -12,7 +14,9 @@ interface MainFrameProps {
 }
 
 const MainFrame: React.FC<MainFrameProps> = ({ children }) => {
-    // State for zoom level
+    let setScale: React.Dispatch<React.SetStateAction<number>>;
+    [displayProps.scale, setScale] = useState<number>(displayProps.scale);
+    const [showSlider, setShowSlider] = useState(false); // State to toggle slider visibility
     const contentRef = useRef<HTMLDivElement>(null); // Ref for the DOM content container
 
     const handleMenuClick = (key: string) => {
@@ -20,7 +24,7 @@ const MainFrame: React.FC<MainFrameProps> = ({ children }) => {
     };
 
     const handleZoomChange = (value: number) => {
-        displayProps.setScale(value);
+        setScale(value*0.7/100);
     };
 
     useEffect(() => {
@@ -30,56 +34,69 @@ const MainFrame: React.FC<MainFrameProps> = ({ children }) => {
         }
     }, [displayProps.scale]);
 
+    const toggleSliderVisibility = () => {
+        setShowSlider(!showSlider); // Toggle visibility of the slider
+    };
+
+    // Define Menu items to replace the deprecated "children"
+    const menuItems = [
+        { key: '1', icon: <FontAwesomeIcon icon={faArrowPointer} />, label: 'Pointer' },
+        { key: '2', icon: <FontAwesomeIcon icon={faHand} />, label: 'Hand' },
+        { key: '3', icon: <FontAwesomeIcon icon={faCircle} />, label: 'Circle' },
+    ];
+
     return (
-        <Layout style={{ minHeight: '100vh' }}>
-            <Sider
-                width={100}
-                style={{
-                    background: '#ffffff',
-                    padding: '20px'
-                }}>
+        <Layout style={{ minHeight: '100vh' }} className="noizeBg">
+            <Sider width={'110px'} style={{ background: 'transparent', padding: '20px' }}>
                 <Menu
+                    mode="inline"
                     defaultSelectedKeys={['1']}
                     style={{ background: 'transparent' }}
+                    items={menuItems} // Use items instead of children
                     onClick={(e) => handleMenuClick(e.key)}
-                    mode="vertical" // Указываем вертикальный режим
-                    selectable={false} // Отключаем выделение
-                >
-                    <Menu.Item key="1" icon={<FontAwesomeIcon icon={faArrowPointer} />} title="" />
-                    <Menu.Item key="2" icon={<FontAwesomeIcon icon={faHandPointer} />} title="" />
-                    <Menu.Item key="3" icon={<FontAwesomeIcon icon={faCircle} />} title="" />
-                </Menu>
-                <div style={{ marginTop: '30px', height: '200px' }}>
-                    <p>Zoom:</p>
-                    <Slider
-                        vertical
-                        min={0.1}
-                        max={2.5}
-                        step={0.1}
-                        value={displayProps.scale}
-                        onChange={handleZoomChange}
-                        style={{ height: '100%' }} // Для задания размера вертикального слайдера
-                    />
+                />
+                <div style={{ marginTop: '30px' }}>
+                    <Button type="default" onClick={toggleSliderVisibility}>
+                        Zoom
+                    </Button>
+                    {showSlider && (
+                        <div style={{ marginTop: '20px', marginLeft: '20px', height: '100px' }}>
+                            <Slider
+                                vertical
+                                min={15}
+                                max={250}
+                                step={1}
+                                value={displayProps.scale/0.7*100}
+                                onChange={handleZoomChange}
+                                style={{ height: '100%' }}
+                            />
+                        </div>
+                    )}
                 </div>
             </Sider>
-            <Layout>
+            <Layout style={{ background: 'transparent' }}>
                 <Content
                     style={{
-                        margin: '20px',
+                        margin: '10px',
                         padding: '0px',
-                        overflow: 'auto',
+                        overflow: 'hidden',
                         border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        position: 'relative'
-                    }}>
+                        borderRadius: '7px',
+                        position: 'relative',
+                        background: 'transparent',
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' // Add shadow
+                    }}
+                >
                     <div
                         style={{
                             position: 'absolute',
-                            width: '1000vw', // Set a fixed canvas width
-                            height: '1000vh', // Set a fixed canvas height
-                            overflow: 'auto'
+                            width: `calc(1000vw)`, // Set a fixed canvas width
+                            height: `1000vh`, // Set a fixed canvas height
+                            overflow: 'hidden',
+                            background: '#fff',
                         }}
-                        ref={contentRef}>
+                        ref={contentRef}
+                    >
                         {children} {/* Render children here */}
                     </div>
                 </Content>
